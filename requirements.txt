@@ -9,7 +9,7 @@ optimum
 datasets
 evaluate
 tensorboard
-
+albumentations
 # Model optimization libraries
 onnx
 onnxruntime
