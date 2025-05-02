@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict/>
+    </array>
+    
+    <key>NSHealthShareUsageDescription</key>
+    <string>SkinSnap uses health data to correlate sleep, stress, and activity with your skin condition.</string>
+    
+    <key>NSHealthUpdateUsageDescription</key>
+    <string>SkinSnap may update health data to track correlations with skin health.</string>
+    
+    <key>NSCameraUsageDescription</key>
+    <string>SkinSnap needs camera access to analyze your skin condition.</string>
+</dict>
+</plist>
