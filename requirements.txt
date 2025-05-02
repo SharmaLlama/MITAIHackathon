@@ -1,0 +1,45 @@
+# Core ML and deployment libraries
+torch
+torchvision
+torchaudio
+transformers
+accelerate
+bitsandbytes
+optimum
+datasets
+evaluate
+tensorboard
+
+# Model optimization libraries
+onnx
+onnxruntime
+sentencepiece
+
+# Deployment and serving libraries
+flask
+fastapi
+uvicorn
+streamlit
+gradio
+huggingface_hub
+
+# Utility libraries
+numpy
+pandas
+matplotlib
+scikit-learn
+tqdm
+
+# For quantization and model compression
+neural-compressor
+
+# For model fine-tuning
+peft
+
+# For vector databases
+faiss-cpu
+chromadb
+
+# For monitoring and logging
+wandb
+mlflow
