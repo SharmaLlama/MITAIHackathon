@@ -16,13 +16,9 @@ An Apple iOS application demonstrating an edge-compatible, quantized acne lesion
    * [iOS App (Xcode) Setup](#ios-app-xcode-setup)
 4. [Usage](#usage)
 
-   * [Model Quantization](#model-quantization)
    * [Quantise\_and\_Compare Notebook](#quantise_and_compare-notebook)
    * [Prototyping YOLO Training](#prototyping-yolo-training)
    * [Running the iOS App](#running-the-ios-app)
-5. [Contributing](#contributing)
-6. [License](#license)
-
 ---
 
 ## Project Overview
@@ -68,9 +64,8 @@ The objective of this project is to deploy an acne lesion detection system on Ap
 Download the acne lesion dataset from Roboflow:
 
 - [Acne04 Dataset on Roboflow Universe](https://universe.roboflow.com/andrei-dore-5lz05/acne04)
-bash
-git clone https://github.com/SharmaLlama/MITAIHackathon.git acne-lds-edge-ios
-cd acne-lds-edge-ios
+  ```bash git clone https://github.com/SharmaLlama/MITAIHackathon.git acne-lds-edge-ios```
+  ```cd acne-lds-edge-ios```
 
 
 ### Python Environment & Notebook
@@ -106,8 +101,7 @@ bash
 1. Open the Xcode project:
 
    
-bash
-   open ios_app/AcneLDS.xcodeproj
+```open app/SkinSnap.xcodeproj```
 
 2. Ensure the AcneClassQuantFin.mlpackage file is added to the project. If not, drag and drop it into Xcode.
 3. Select a target device or simulator (iPhone running iOS 15+).
