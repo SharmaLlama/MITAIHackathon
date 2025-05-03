@@ -91,22 +91,22 @@ struct FitnessView: View {
                         SummaryCardView(fitnessData: fitnessData)
                         
                         // Steps Chart
-                        ChartSection(title: "Steps") {
+                        FitnessChartSection(title: "Steps") {
                             StepsChartView(fitnessData: fitnessData)
                         }
                         
                         // Exercise Minutes Chart
-                        ChartSection(title: "Exercise Minutes") {
+                        FitnessChartSection(title: "Exercise Minutes") {
                             ExerciseChartView(fitnessData: fitnessData)
                         }
                         
                         // Heart Rate Chart
-                        ChartSection(title: "Heart Rate") {
+                        FitnessChartSection(title: "Heart Rate") {
                             HeartRateChartView(fitnessData: fitnessData)
                         }
                         
                         // Sleep Chart
-                        ChartSection(title: "Sleep Hours") {
+                        FitnessChartSection(title: "Sleep Hours") {
                             SleepChartView(fitnessData: fitnessData)
                         }
                         
@@ -634,7 +634,7 @@ struct DataPoint: Identifiable {
     let value: Double
 }
 
-struct ChartSection<Content: View>: View {
+struct FitnessChartSection<Content: View>: View {
     let title: String
     let content: Content
     

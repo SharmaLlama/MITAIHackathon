@@ -17,27 +17,31 @@ class SkinEntry {
     var date: Date
     var severityScore: Double
     var condition: String
+    var lesionCount: Int // Added lesion count property
     var imageData: Data?
     @Relationship(deleteRule: .cascade) var regions: [RegionSeverity]?
     
-    init(id: UUID = UUID(), 
-         date: Date, 
-         severityScore: Double, 
-         condition: String, 
+    init(id: UUID = UUID(),
+         date: Date,
+         severityScore: Double,
+         condition: String,
+         lesionCount: Int = 0, // Added with default value
          imageData: Data? = nil,
          regions: [RegionSeverity]? = nil) {
         self.id = id
         self.date = date
         self.severityScore = severityScore
         self.condition = condition
+        self.lesionCount = lesionCount
         self.imageData = imageData
         self.regions = regions
     }
     
     // Helper to create a skin entry with associated regions
-    static func create(date: Date, 
-                      severityScore: Double, 
+    static func create(date: Date,
+                      severityScore: Double,
                       condition: String,
+                      lesionCount: Int, // Added lesion count parameter
                       imageData: Data?,
                       regions: [FaceRegion]) -> SkinEntry {
         
@@ -49,12 +53,12 @@ class SkinEntry {
             date: date,
             severityScore: severityScore,
             condition: condition,
+            lesionCount: lesionCount, // Pass the lesion count
             imageData: imageData,
             regions: regionEntities
         )
     }
 }
-
 @Model
 class RegionSeverity {
     var id: UUID
@@ -72,22 +76,67 @@ class RegionSeverity {
 class LifestyleEntry {
     var id: UUID
     var date: Date
+    
+    // Existing fields
     var sleepHours: Double
     var stressLevel: Int
     var waterIntake: Int
     var dairyConsumed: Bool
     var sugarConsumed: Bool
     var alcoholConsumed: Bool
+    
+    // New diet fields
+    var fastFoodConsumed: Bool
+    var highProteinMeal: Bool
+    var fruitsAndVeggiesServings: Int
+    
+    // New stress/mood fields
+    var moodRating: Int // 1-5 scale
+    var anxietyLevel: Int // 1-5 scale
+    
+    // New location/travel fields
+    var traveledRecently: Bool
+    var currentLocation: String?
+    var climateChange: Bool
+    
+    // New product usage fields
+    var usedSunscreen: Bool
+    var usedMakeup: Bool
+    var usedFaceWash: Bool
+    var usedMoisturizer: Bool
+    var usedAcneTreatment: Bool
+    var changedPillowcase: Bool
+    
+    // New outdoor exposure
+    var outdoorHours: Double
+    var sunExposureLevel: Int // 1-5 scale
+    
     var notes: String?
     
-    init(id: UUID = UUID(), 
-         date: Date, 
-         sleepHours: Double, 
-         stressLevel: Int, 
-         waterIntake: Int, 
-         dairyConsumed: Bool, 
-         sugarConsumed: Bool, 
-         alcoholConsumed: Bool, 
+    init(id: UUID = UUID(),
+         date: Date,
+         sleepHours: Double,
+         stressLevel: Int,
+         waterIntake: Int,
+         dairyConsumed: Bool,
+         sugarConsumed: Bool,
+         alcoholConsumed: Bool,
+         fastFoodConsumed: Bool = false,
+         highProteinMeal: Bool = false,
+         fruitsAndVeggiesServings: Int = 0,
+         moodRating: Int = 3,
+         anxietyLevel: Int = 1,
+         traveledRecently: Bool = false,
+         currentLocation: String? = nil,
+         climateChange: Bool = false,
+         usedSunscreen: Bool = false,
+         usedMakeup: Bool = false,
+         usedFaceWash: Bool = false,
+         usedMoisturizer: Bool = false,
+         usedAcneTreatment: Bool = false,
+         changedPillowcase: Bool = false,
+         outdoorHours: Double = 0.0,
+         sunExposureLevel: Int = 1,
          notes: String? = nil) {
         self.id = id
         self.date = date
@@ -97,9 +146,26 @@ class LifestyleEntry {
         self.dairyConsumed = dairyConsumed
         self.sugarConsumed = sugarConsumed
         self.alcoholConsumed = alcoholConsumed
+        self.fastFoodConsumed = fastFoodConsumed
+        self.highProteinMeal = highProteinMeal
+        self.fruitsAndVeggiesServings = fruitsAndVeggiesServings
+        self.moodRating = moodRating
+        self.anxietyLevel = anxietyLevel
+        self.traveledRecently = traveledRecently
+        self.currentLocation = currentLocation
+        self.climateChange = climateChange
+        self.usedSunscreen = usedSunscreen
+        self.usedMakeup = usedMakeup
+        self.usedFaceWash = usedFaceWash
+        self.usedMoisturizer = usedMoisturizer
+        self.usedAcneTreatment = usedAcneTreatment
+        self.changedPillowcase = changedPillowcase
+        self.outdoorHours = outdoorHours
+        self.sunExposureLevel = sunExposureLevel
         self.notes = notes
     }
 }
+
 
 // MARK: - Helper extensions for model querying
 
@@ -175,14 +241,31 @@ extension LifestyleEntry {
 
 // MARK: - Supporting Models for Analysis
 
-// Structure to hold the overall skin analysis results
 struct SkinAnalysisResult {
     let date: Date
     let severityScore: Double
     let condition: String
     let confidence: Float
     let affectedAreas: [FaceRegion]
-    let detections: [SkinConditionDetection]  // Added for YOLO detections
+    let lesionCount: Int
+    
+    // Add the toSkinEntry method
+    func toSkinEntry(imageData: Data?) -> SkinEntry {
+        // Convert face regions to region severity entities
+        let regionEntities = affectedAreas.map { area in
+            RegionSeverity(name: area.name, severity: area.severity)
+        }
+        
+        // Create and return a new SkinEntry
+        return SkinEntry(
+            date: date,
+            severityScore: severityScore,
+            condition: condition,
+            lesionCount: lesionCount,
+            imageData: imageData,
+            regions: regionEntities
+        )
+    }
 }
 
 // Structure to represent a region of the face
@@ -195,3 +278,4 @@ struct HeatmapData {
     let intensityMap: [(String, Double)]
     let maxIntensity: Double
 }
+

@@ -11,10 +11,14 @@ struct SkinSnapApp: App {
             ContentView()
                 .environmentObject(healthKitManager)
                 .onAppear {
+                    // Request standard and extended HealthKit permissions
                     healthKitManager.requestAuthorization()
+                    healthKitManager.requestExtendedAuthorization()
                 }
         }
-        .modelContainer(for: [SkinEntry.self, LifestyleEntry.self]) // potential for region severity here
+        // Configure the SwiftData model container with schema migration options
+        .modelContainer(for: [SkinEntry.self, RegionSeverity.self, LifestyleEntry.self])
+            
     }
 }
 
@@ -42,11 +46,17 @@ struct ContentView: View {
                 }
                 .tag(2)
             
+            FitnessView()
+                .tabItem {
+                    Label("Fitness", systemImage: "figure.walk")
+                }
+                .tag(3)
+            
             SettingsView()
                 .tabItem {
                     Label("Settings", systemImage: "gear")
                 }
-                .tag(3)
+                .tag(4)
         }
     }
 }
@@ -65,6 +75,7 @@ struct SettingsView: View {
                 Section(header: Text("Health Data")) {
                     Button("Connect to Health App") {
                         healthKitManager.requestAuthorization()
+                        healthKitManager.requestExtendedAuthorization()
                     }
                     
                     Text("Connected: \(healthKitManager.isAuthorized ? "Yes" : "No")")
@@ -72,7 +83,7 @@ struct SettingsView: View {
                 }
                 
                 Section(header: Text("About")) {
-                    Text("SkinSnap Lite v1.0")
+                    Text("SkinSnap Pro v1.1")
                     Text("© SharmaLlamaIncorporated")
                 }
             }

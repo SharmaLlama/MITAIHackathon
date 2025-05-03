@@ -1,3 +1,11 @@
+//
+//  AffectedAreasLineChart.swift
+//  SkinSnap
+//
+//  Created by Utkarsh sharma on 3/5/2025.
+//
+
+
 import SwiftUI
 import Charts
 

@@ -25,7 +25,7 @@ class SkinAnalyser {
     
     private func setupModel() {
         // Load Core ML model - changed from yolo11m to AcneClassQuant
-        guard let modelURL = Bundle.main.url(forResource: "AcneClassQuant", withExtension: "mlmodelc") else {
+        guard let modelURL = Bundle.main.url(forResource: "AcneClassQuantFin", withExtension: "mlmodelc") else {
             print("Failed to find AcneClassQuant model file")
             return
         }
@@ -104,53 +104,46 @@ class SkinAnalyser {
         }
     
     private func processAcneClassResults(_ observations: [VNCoreMLFeatureValueObservation], for image: UIImage) -> SkinAnalysisResult {
-           var severityScore: Double = 0.0
-           var lesionCount: Int = 0
-           
-           // Extract values from the model output
-           for observation in observations {
-               if observation.featureName == "severity" {
-                   if let multiArray = observation.featureValue.multiArrayValue {
-                       // Get severity score (0-4 scale)
-                       if multiArray.count > 0 {
-                           severityScore = Double(multiArray[0].doubleValue)
-                       }
-                   }
-               } else if observation.featureName == "lesions" {
-                   if let multiArray = observation.featureValue.multiArrayValue {
-                       // Get lesion count
-                       if multiArray.count > 0 {
-                           lesionCount = Int(round(multiArray[0].doubleValue))
-                       }
-                   }
-               }
-           }
-           
-           // Convert severity score from 0-4 scale to 0-100 scale
-           let normalizedSeverityScore = (severityScore / 4.0) * 100.0
-           
-           // Determine condition based on severity
-           let condition = determineCondition(severityScore: severityScore)
-           
-           // Create affected areas based on severity
-           let affectedAreas = createDefaultAffectedAreas(severityScore: severityScore, lesionCount: lesionCount)
-           
-           // Since we don't have bounding boxes, we'll create a placeholder detection
-           let centerDetection = SkinConditionDetection(
-               boundingBox: CGRect(x: 0.4, y: 0.4, width: 0.2, height: 0.2),
-               label: condition,
-               confidence: Float(severityScore / 4.0)
-           )
-           
-           return SkinAnalysisResult(
-               date: Date(),
-               severityScore: normalizedSeverityScore,
-               condition: condition,
-               confidence: Float(severityScore / 4.0),
-               affectedAreas: affectedAreas,
-               detections: [centerDetection]
-           )
-       }
+        var severityScore: Double = 0.0
+        var lesionCount: Int = 0
+        
+        // Extract values from the model output
+        for observation in observations {
+            if observation.featureName == "var_910" {
+                if let multiArray = observation.featureValue.multiArrayValue {
+                    // Get severity score (0-4 scale)
+                    if multiArray.count > 0 {
+                        severityScore = Double(multiArray[0].doubleValue)
+                    }
+                }
+            } else if observation.featureName == "var_916" {
+                if let multiArray = observation.featureValue.multiArrayValue {
+                    // Get lesion count
+                    if multiArray.count > 0 {
+                        lesionCount = Int(round(multiArray[0].doubleValue))
+                    }
+                }
+            }
+        }
+        
+        // Convert severity score from 0-4 scale to 0-100 scale
+        let normalizedSeverityScore = (severityScore / 4.0) * 100.0
+        
+        // Determine condition based on severity
+        let condition = determineCondition(severityScore: severityScore)
+        
+        // Create affected areas based on severity
+        let affectedAreas = createDefaultAffectedAreas(severityScore: severityScore, lesionCount: lesionCount)
+        
+        return SkinAnalysisResult(
+            date: Date(),
+            severityScore: normalizedSeverityScore,
+            condition: condition,
+            confidence: Float(severityScore / 4.0),
+            affectedAreas: affectedAreas,
+            lesionCount: lesionCount
+        )
+    }
        
         
         // Resize image to target size (needed for the model's input requirements)
