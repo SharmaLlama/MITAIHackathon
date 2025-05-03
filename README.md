@@ -67,7 +67,7 @@ The objective of this project is to deploy an acne lesion detection system on Ap
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/acne-lds-edge-ios.git
+git clone https://github.com/SharmaLlama/MITAIHackathon acne-lds-edge-ios
 cd acne-lds-edge-ios
 ```
 
@@ -110,9 +110,9 @@ https://universe.roboflow.com/andrei-dore-5lz05/acne04
 1. Open the Xcode project:
 
    ```bash
-   open ios_app/SkinSnap.xcodeproj
+   open app/SkinSnap.xcodeproj
    ```
-2. Ensure the `AcneQuantFin.µlpackage` file is added to the project. If not, drag and drop it into Xcode.
+2. Ensure the `AcneQuantFin.mlpackage` file is added to the project. If not, drag and drop it into Xcode.
 3. Select a target device or simulator (iPhone running iOS 15+).
 4. Build and run the app (`⌘R`).
 
