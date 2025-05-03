@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		7F7CBDFC2DC593620093B9E7 /* YOLO in Frameworks */ = {isa = PBXBuildFile; productRef = 7F7CBDFB2DC593620093B9E7 /* YOLO */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		7F7CBDCB2DC582500093B9E7 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -65,6 +69,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7F7CBDFC2DC593620093B9E7 /* YOLO in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -125,6 +130,7 @@
 			);
 			name = SkinSnap;
 			packageProductDependencies = (
+				7F7CBDFB2DC593620093B9E7 /* YOLO */,
 			);
 			productName = SkinSnap;
 			productReference = 7F7CBDB82DC5824C0093B9E7 /* SkinSnap.app */;
@@ -208,6 +214,9 @@
 			);
 			mainGroup = 7F7CBDAF2DC5824C0093B9E7;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				7F7CBDFA2DC593620093B9E7 /* XCRemoteSwiftPackageReference "yolo-ios-app" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7F7CBDB92DC5824C0093B9E7 /* Products */;
 			projectDirPath = "";
@@ -575,6 +584,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		7F7CBDFA2DC593620093B9E7 /* XCRemoteSwiftPackageReference "yolo-ios-app" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ultralytics/yolo-ios-app.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		7F7CBDFB2DC593620093B9E7 /* YOLO */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7F7CBDFA2DC593620093B9E7 /* XCRemoteSwiftPackageReference "yolo-ios-app" */;
+			productName = YOLO;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 7F7CBDB02DC5824C0093B9E7 /* Project object */;
 }

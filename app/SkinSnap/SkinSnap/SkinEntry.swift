@@ -175,38 +175,20 @@ extension LifestyleEntry {
 
 // MARK: - Supporting Models for Analysis
 
-// Models used for skin analysis (not stored in SwiftData)
+// Structure to hold the overall skin analysis results
 struct SkinAnalysisResult {
     let date: Date
-    let severityScore: Double  // 0-100 scale
-    let condition: String      // Classification label
-    let confidence: Float      // Model confidence
+    let severityScore: Double
+    let condition: String
+    let confidence: Float
     let affectedAreas: [FaceRegion]
-    
-    // Generate heatmap data
-    func heatmapData() -> HeatmapData {
-        // In a real app, convert affected areas to a visual heatmap
-        return HeatmapData(
-            intensityMap: affectedAreas.map { ($0.name, $0.severity) },
-            maxIntensity: affectedAreas.map { $0.severity }.max() ?? 0.0
-        )
-    }
-    
-    // Convert to SwiftData model for storage
-    func toSkinEntry(imageData: Data?) -> SkinEntry {
-        return SkinEntry.create(
-            date: date,
-            severityScore: severityScore,
-            condition: condition,
-            imageData: imageData,
-            regions: affectedAreas
-        )
-    }
+    let detections: [SkinConditionDetection]  // Added for YOLO detections
 }
 
+// Structure to represent a region of the face
 struct FaceRegion {
     let name: String
-    let severity: Double  // 0.0 to 1.0
+    let severity: Double
 }
 
 struct HeatmapData {
