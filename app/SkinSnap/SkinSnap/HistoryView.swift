@@ -1,18 +1,23 @@
 import SwiftUI
 import SwiftData
 import Charts
+
+// Define TimeRange enum directly in this file to avoid scope issues
+enum HistoryTimeRange {
+    case week, month, threeMonths, sixMonths, year
+}
+
 struct HistoryView: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var healthKitManager: HealthKitManager
     
-    // Using SwiftData for direct data access
-    // Instead of using @Query which might be causing issues, we'll fetch manually
+    // Using manual state instead of @Query to avoid ambiguity issues
     @State private var skinEntries: [SkinEntry] = []
     @State private var lifestyleEntries: [LifestyleEntry] = []
     
-    @State private var selectedTimeRange: TimeRange = .week
+    @State private var selectedTimeRange: HistoryTimeRange = .week // Use local enum
     @State private var healthData: [Date: HealthDayData] = [:]
-    @State private var correlationResults: [CorrelationResult] = []
+    @State private var correlationResults: [HistoryCorrelationResult] = [] // Renamed to avoid conflict
     @State private var isLoading = true
     
     var dateRange: (start: Date, end: Date) {
@@ -44,11 +49,11 @@ struct HistoryView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     // Time range picker
                     Picker("Time Range", selection: $selectedTimeRange) {
-                        Text("Week").tag(TimeRange.week)
-                        Text("Month").tag(TimeRange.month)
-                        Text("3 Months").tag(TimeRange.threeMonths)
-                        Text("6 Months").tag(TimeRange.sixMonths)
-                        Text("Year").tag(TimeRange.year)
+                        Text("Week").tag(HistoryTimeRange.week)
+                        Text("Month").tag(HistoryTimeRange.month)
+                        Text("3 Months").tag(HistoryTimeRange.threeMonths)
+                        Text("6 Months").tag(HistoryTimeRange.sixMonths)
+                        Text("Year").tag(HistoryTimeRange.year)
                     }
                     .pickerStyle(SegmentedPickerStyle())
                     .padding(.horizontal)
@@ -87,18 +92,18 @@ struct HistoryView: View {
                             .padding(.horizontal)
                         
                         // Severity Chart
-                        ChartSection(title: "Skin Severity Trend") {
-                            SeverityChart(skinEntries: skinEntries)
+                        HistoryChartSection(title: "Skin Severity Trend") {
+                            HistorySeverityChart(skinEntries: skinEntries)
                         }
                         
                         // Affected Areas Chart - now a time series
-                        ChartSection(title: "Affected Areas Over Time") {
-                            AffectedAreasTimeSeriesChart(skinEntries: skinEntries)
+                        HistoryChartSection(title: "Affected Areas Over Time") {
+                            HistoryAffectedAreasTimeSeriesChart(skinEntries: skinEntries)
                         }
                         
                         // Correlation Analysis
-                        CorrelationSection(title: "Potential Triggers") {
-                            CorrelationView(correlations: correlationResults)
+                        HistoryCorrelationSection(title: "Potential Triggers") {
+                            HistoryCorrelationView(correlations: correlationResults)
                         }
                     }
                 }
@@ -124,17 +129,8 @@ struct HistoryView: View {
         let (startDate, endDate) = dateRange
         
         // Directly fetch entries using the helper methods instead of relying on @Query
-        skinEntries = SkinEntry.entriesInRange(
-            modelContext: modelContext,
-            from: startDate,
-            to: endDate
-        )
-        
-        lifestyleEntries = LifestyleEntry.entriesInRange(
-            modelContext: modelContext,
-            from: startDate,
-            to: endDate
-        )
+        skinEntries = fetchSkinEntries(from: startDate, to: endDate)
+        lifestyleEntries = fetchLifestyleEntries(from: startDate, to: endDate)
         
         // Sort entries by date for proper display
         skinEntries.sort { $0.date < $1.date }
@@ -154,13 +150,53 @@ struct HistoryView: View {
         }
     }
     
+    // Helper method to fetch skin entries
+    private func fetchSkinEntries(from startDate: Date, to endDate: Date) -> [SkinEntry] {
+        let predicate = #Predicate<SkinEntry> { entry in
+            entry.date >= startDate && entry.date <= endDate
+        }
+        
+        let descriptor = FetchDescriptor<SkinEntry>(
+            predicate: predicate,
+            sortBy: [SortDescriptor(\.date, order: .forward)]
+        )
+        
+        do {
+            let results = try modelContext.fetch(descriptor)
+            print("Found \(results.count) skin entries between \(startDate) and \(endDate)")
+            return results
+        } catch {
+            print("Error fetching skin entries: \(error.localizedDescription)")
+            return []
+        }
+    }
+    
+    // Helper method to fetch lifestyle entries
+    private func fetchLifestyleEntries(from startDate: Date, to endDate: Date) -> [LifestyleEntry] {
+        let predicate = #Predicate<LifestyleEntry> { entry in
+            entry.date >= startDate && entry.date <= endDate
+        }
+        
+        let descriptor = FetchDescriptor<LifestyleEntry>(
+            predicate: predicate,
+            sortBy: [SortDescriptor(\.date, order: .forward)]
+        )
+        
+        do {
+            return try modelContext.fetch(descriptor)
+        } catch {
+            print("Error fetching lifestyle entries: \(error.localizedDescription)")
+            return []
+        }
+    }
+    
     // Basic correlation analysis
     private func performCorrelationAnalysis(
         skinEntries: [SkinEntry],
         lifestyleEntries: [LifestyleEntry],
         healthData: [Date: HealthDayData]
-    ) -> [CorrelationResult] {
-        var results: [CorrelationResult] = []
+    ) -> [HistoryCorrelationResult] {
+        var results: [HistoryCorrelationResult] = []
         
         // Map of dates to severity scores
         let calendar = Calendar.current
@@ -172,7 +208,7 @@ struct HistoryView: View {
         }
         
         // Check for dairy correlation
-        var dairyCorrelation = CorrelationResult(
+        var dairyCorrelation = HistoryCorrelationResult(
             factor: "Dairy Consumption",
             correlationStrength: 0,
             description: "Insufficient data"
@@ -206,20 +242,20 @@ struct HistoryView: View {
             let normalized = min(abs(difference) / 25.0, 1.0) // Normalize to 0-1 scale
             
             if difference > 10 {
-                dairyCorrelation = CorrelationResult(
+                dairyCorrelation = HistoryCorrelationResult(
                     factor: "Dairy Consumption",
                     correlationStrength: normalized,
                     description: "Skin severity is \(Int(difference)) points higher after consuming dairy"
                 )
             } else if difference < -10 {
                 // Unusual - dairy seemed to help
-                dairyCorrelation = CorrelationResult(
+                dairyCorrelation = HistoryCorrelationResult(
                     factor: "Dairy Consumption",
                     correlationStrength: normalized,
                     description: "No negative correlation detected with dairy"
                 )
             } else {
-                dairyCorrelation = CorrelationResult(
+                dairyCorrelation = HistoryCorrelationResult(
                     factor: "Dairy Consumption",
                     correlationStrength: normalized,
                     description: "Minimal effect from dairy consumption"
@@ -230,7 +266,7 @@ struct HistoryView: View {
         results.append(dairyCorrelation)
         
         // Similar analysis for sleep
-        var sleepCorrelation = CorrelationResult(
+        var sleepCorrelation = HistoryCorrelationResult(
             factor: "Sleep Duration",
             correlationStrength: 0,
             description: "Insufficient data"
@@ -264,13 +300,13 @@ struct HistoryView: View {
             let normalized = min(abs(difference) / 25.0, 1.0) // Normalize to 0-1 scale
             
             if difference > 10 {
-                sleepCorrelation = CorrelationResult(
+                sleepCorrelation = HistoryCorrelationResult(
                     factor: "Sleep Duration",
                     correlationStrength: normalized,
                     description: "Skin severity is \(Int(difference)) points higher after insufficient sleep"
                 )
             } else {
-                sleepCorrelation = CorrelationResult(
+                sleepCorrelation = HistoryCorrelationResult(
                     factor: "Sleep Duration",
                     correlationStrength: normalized,
                     description: "Minor effect from sleep duration"
@@ -287,10 +323,18 @@ struct HistoryView: View {
     }
 }
 
-// MARK: - Supporting Views
+// MARK: - Supporting Views and Models
 
-// Chart container view
-struct ChartSection<Content: View>: View {
+// Renamed to avoid conflicts
+struct HistoryCorrelationResult: Identifiable {
+    let id = UUID()
+    let factor: String
+    let correlationStrength: Double // 0-1 scale
+    let description: String
+}
+
+// Chart container view - renamed to avoid conflicts
+struct HistoryChartSection<Content: View>: View {
     let title: String
     let content: Content
     
@@ -316,8 +360,8 @@ struct ChartSection<Content: View>: View {
     }
 }
 
-// Correlation analysis section
-struct CorrelationSection<Content: View>: View {
+// Correlation analysis section - renamed to avoid conflicts
+struct HistoryCorrelationSection<Content: View>: View {
     let title: String
     let content: Content
     
@@ -342,8 +386,8 @@ struct CorrelationSection<Content: View>: View {
     }
 }
 
-// Severity chart implementation
-struct SeverityChart: View {
+// Severity chart implementation - renamed to avoid conflicts
+struct HistorySeverityChart: View {
     let skinEntries: [SkinEntry]
     
     var body: some View {
@@ -380,13 +424,19 @@ struct SeverityChart: View {
     }
 }
 
-// New time series implementation for affected areas
-struct AffectedAreasTimeSeriesChart: View {
+// New time series implementation for affected areas - renamed to avoid conflicts
+struct HistoryAffectedAreasTimeSeriesChart: View {
     let skinEntries: [SkinEntry]
     
     // Extract time series data for each region
     private var timeSeriesData: [String: [(date: Date, severity: Double)]] {
         var result: [String: [(date: Date, severity: Double)]] = [:]
+        
+        // Initialize with all common regions
+        let commonRegions = ["Forehead", "Cheeks", "Chin", "Nose"]
+        for region in commonRegions {
+            result[region] = []
+        }
         
         for entry in skinEntries {
             guard let regions = entry.regions else { continue }
@@ -412,23 +462,21 @@ struct AffectedAreasTimeSeriesChart: View {
         if #available(iOS 16.0, *) {
             Chart {
                 ForEach(Array(timeSeriesData.keys), id: \.self) { regionName in
-                    if let regionData = timeSeriesData[regionName] {
-                        ForEach(regionData, id: \.date) { dataPoint in
+                    if let regionData = timeSeriesData[regionName], !regionData.isEmpty {
+                        ForEach(0..<regionData.count, id: \.self) { index in
+                            let dataPoint = regionData[index]
                             LineMark(
                                 x: .value("Date", dataPoint.date),
                                 y: .value("Severity", dataPoint.severity)
                             )
-                            .foregroundStyle(colorForRegion(regionName))
+                            .foregroundStyle(by: .value("Region", regionName))
                             
                             PointMark(
                                 x: .value("Date", dataPoint.date),
                                 y: .value("Severity", dataPoint.severity)
                             )
-                            .foregroundStyle(colorForRegion(regionName))
+                            .foregroundStyle(by: .value("Region", regionName))
                         }
-                        .interpolationMethod(.catmullRom)
-                        .symbol(.circle)
-                        .symbolSize(30)
                     }
                 }
             }
@@ -440,13 +488,13 @@ struct AffectedAreasTimeSeriesChart: View {
                     AxisValueLabel(format: .dateTime.month().day())
                 }
             }
-            .chartLegend(position: .bottom) {
-                HStack(spacing: 16) {
-                    ForEach(Array(timeSeriesData.keys).sorted(), id: \.self) { regionName in
-                        LegendItem(color: colorForRegion(regionName), label: regionName)
-                    }
-                }
-            }
+            .chartForegroundStyleScale([
+                "Forehead": Color.blue,
+                "Cheeks": Color.red,
+                "Chin": Color.green,
+                "Nose": Color.orange,
+                "Eyes": Color.purple
+            ])
         } else {
             // Fallback for iOS 15
             VStack {
@@ -457,7 +505,7 @@ struct AffectedAreasTimeSeriesChart: View {
                 // Basic legend
                 HStack(spacing: 16) {
                     ForEach(["Forehead", "Cheeks", "Chin", "Nose"], id: \.self) { regionName in
-                        LegendItem(color: colorForRegion(regionName), label: regionName)
+                        HistoryLegendItem(color: colorForRegion(regionName), label: regionName)
                     }
                 }
                 .padding(.top, 8)
@@ -483,7 +531,8 @@ struct AffectedAreasTimeSeriesChart: View {
     }
 }
 
-struct LegendItem: View {
+// Legend item - renamed to avoid conflicts
+struct HistoryLegendItem: View {
     let color: Color
     let label: String
     
@@ -499,9 +548,9 @@ struct LegendItem: View {
     }
 }
 
-// Correlation view
-struct CorrelationView: View {
-    let correlations: [CorrelationResult]
+// Correlation view - renamed to avoid conflicts
+struct HistoryCorrelationView: View {
+    let correlations: [HistoryCorrelationResult]
     
     var body: some View {
         VStack(spacing: 16) {
@@ -554,252 +603,4 @@ struct CorrelationView: View {
         default: return .red
         }
     }
-}
-
-// MARK: - Supporting Models
-
-enum TimeRange {
-    case week, month, threeMonths, sixMonths, year
-}
-
-struct RegionData: Identifiable {
-    let id = UUID()
-    let name: String
-    let severity: Double
-}
-
-struct CorrelationResult: Identifiable {
-    let id = UUID()
-    let factor: String
-    let correlationStrength: Double // 0-1 scale
-    let description: String
-}
-
-// MARK: - Supporting Views
-
-// Chart container view
-struct ChartSection<Content: View>: View {
-    let title: String
-    let content: Content
-    
-    init(title: String, @ViewBuilder content: () -> Content) {
-        self.title = title
-        self.content = content()
-    }
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.headline)
-                .padding(.horizontal)
-            
-            content
-                .frame(height: 220)
-                .padding(.horizontal, 8)
-        }
-        .padding(.vertical, 8)
-        .background(Color(UIColor.secondarySystemBackground))
-        .cornerRadius(12)
-        .padding(.horizontal)
-    }
-}
-
-// Correlation analysis section
-struct CorrelationSection<Content: View>: View {
-    let title: String
-    let content: Content
-    
-    init(title: String, @ViewBuilder content: () -> Content) {
-        self.title = title
-        self.content = content()
-    }
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.headline)
-                .padding(.horizontal)
-            
-            content
-                .padding(.horizontal, 8)
-        }
-        .padding(.vertical, 8)
-        .background(Color(UIColor.secondarySystemBackground))
-        .cornerRadius(12)
-        .padding(.horizontal)
-    }
-}
-
-// Severity chart implementation
-struct SeverityChart: View {
-    let skinEntries: [SkinEntry]
-    
-    var body: some View {
-        if #available(iOS 16.0, *) {
-            Chart {
-                ForEach(skinEntries) { entry in
-                    LineMark(
-                        x: .value("Date", entry.date),
-                        y: .value("Severity", entry.severityScore)
-                    )
-                    .foregroundStyle(Color.red.gradient)
-                    
-                    PointMark(
-                        x: .value("Date", entry.date),
-                        y: .value("Severity", entry.severityScore)
-                    )
-                    .foregroundStyle(Color.red)
-                }
-            }
-            .chartYScale(domain: 0...100)
-            .chartXAxis {
-                AxisMarks(values: .automatic) { _ in
-                    AxisGridLine()
-                    AxisTick()
-                    AxisValueLabel(format: .dateTime.month().day())
-                }
-            }
-        } else {
-            // Fallback for iOS 15
-            Text("Charts available in iOS 16+")
-                .font(.callout)
-                .foregroundColor(.gray)
-        }
-    }
-}
-
-// Affected areas chart
-struct AffectedAreasChart: View {
-    let skinEntries: [SkinEntry]
-    
-    // Extract region data from SwiftData entries
-    var regionData: [RegionData] {
-        // Get the latest entry with regions
-        guard let latestEntry = skinEntries.sorted(by: { $0.date > $1.date }).first,
-              let regions = latestEntry.regions, !regions.isEmpty else {
-            // Fallback to placeholder data if no regions are available
-            return [
-                RegionData(name: "Forehead", severity: 65),
-                RegionData(name: "Cheeks", severity: 45),
-                RegionData(name: "Chin", severity: 78),
-                RegionData(name: "Nose", severity: 32)
-            ]
-        }
-        
-        // Convert RegionSeverity to RegionData
-        return regions.map { region in
-            RegionData(name: region.name, severity: region.severity * 100)
-        }
-    }
-    
-    var body: some View {
-        if #available(iOS 16.0, *) {
-            Chart {
-                ForEach(regionData) { region in
-                    BarMark(
-                        x: .value("Region", region.name),
-                        y: .value("Severity", region.severity)
-                    )
-                    .foregroundStyle(Color.orange.gradient)
-                }
-            }
-            .chartYScale(domain: 0...100)
-        } else {
-            // Fallback for iOS 15
-            HStack {
-                ForEach(regionData) { region in
-                    VStack {
-                        Spacer()
-                        
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.orange)
-                            .frame(width: 30, height: CGFloat(region.severity) * 1.8)
-                        
-                        Text(region.name)
-                            .font(.caption)
-                            .frame(width: 60)
-                            .multilineTextAlignment(.center)
-                    }
-                }
-                Spacer()
-            }
-            .padding(.horizontal)
-        }
-    }
-}
-
-// Correlation view
-struct CorrelationView: View {
-    let correlations: [CorrelationResult]
-    
-    var body: some View {
-        VStack(spacing: 16) {
-            if correlations.isEmpty {
-                Text("Not enough data to analyse correlations")
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
-                    .padding()
-            } else {
-                ForEach(correlations) { correlation in
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text(correlation.factor)
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                            
-                            Spacer()
-                            
-                            // Correlation strength indicator
-                            HStack(spacing: 2) {
-                                ForEach(0..<5, id: \.self) { index in
-                                    Circle()
-                                        .fill(index < Int(correlation.correlationStrength * 5) ? Color.blue : Color.gray.opacity(0.3))
-                                        .frame(width: 8, height: 8)
-                                }
-                            }
-                        }
-                        
-                        Text(correlation.description)
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                        
-                        if correlation.correlationStrength > 0 {
-                            ProgressView(value: correlation.correlationStrength)
-                                .progressViewStyle(LinearProgressViewStyle(tint: correlationColor(strength: correlation.correlationStrength)))
-                        }
-                    }
-                    .padding()
-                    .background(Color(UIColor.systemBackground))
-                    .cornerRadius(8)
-                }
-            }
-        }
-    }
-    
-    private func correlationColor(strength: Double) -> Color {
-        switch strength {
-        case 0..<0.3: return .blue
-        case 0.3..<0.6: return .orange
-        default: return .red
-        }
-    }
-}
-
-// MARK: - Supporting Models
-
-enum TimeRange {
-    case week, month, threeMonths, sixMonths, year
-}
-
-struct RegionData: Identifiable {
-    let id = UUID()
-    let name: String
-    let severity: Double
-}
-
-struct CorrelationResult: Identifiable {
-    let id = UUID()
-    let factor: String
-    let correlationStrength: Double // 0-1 scale
-    let description: String
 }

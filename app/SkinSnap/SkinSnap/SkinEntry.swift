@@ -170,23 +170,58 @@ class LifestyleEntry {
 // MARK: - Helper extensions for model querying
 
 extension SkinEntry {
-    // Get entries within date range
+    // Get entries within date range - improved implementation
     static func entriesInRange(modelContext: ModelContext, from startDate: Date, to endDate: Date) -> [SkinEntry] {
+        // Create predicate to filter by date range
         let predicate = #Predicate<SkinEntry> { entry in
             entry.date >= startDate && entry.date <= endDate
         }
         
+        // Create descriptor with sorting
         let descriptor = FetchDescriptor<SkinEntry>(
             predicate: predicate,
             sortBy: [SortDescriptor(\.date, order: .forward)]
         )
         
         do {
-            return try modelContext.fetch(descriptor)
+            // Attempt to fetch entries
+            let results = try modelContext.fetch(descriptor)
+            print("Found \(results.count) skin entries between \(startDate) and \(endDate)")
+            
+            // Log some details for debugging
+            if !results.isEmpty {
+                for entry in results {
+                    let formatter = DateFormatter()
+                    formatter.dateStyle = .medium
+                    formatter.timeStyle = .short
+                    print("Entry: \(formatter.string(from: entry.date)), Score: \(entry.severityScore), Condition: \(entry.condition)")
+                    
+                    if let regions = entry.regions {
+                        print("  Regions: \(regions.count)")
+                        for region in regions {
+                            print("    \(region.name): \(region.severity * 100)%")
+                        }
+                    } else {
+                        print("  No regions")
+                    }
+                }
+            }
+            
+            return results
         } catch {
             print("Error fetching skin entries: \(error.localizedDescription)")
             return []
         }
+    }
+    
+    // Helper to access all available regions
+    static var allRegionNames: [String] {
+        return ["Forehead", "Cheeks", "Chin", "Nose", "Eyes"]
+    }
+    
+    // Get the severity for a specific region
+    func severityForRegion(_ regionName: String) -> Double? {
+        return regions?.first(where: { $0.name == regionName })?.severity
     }
 }
 

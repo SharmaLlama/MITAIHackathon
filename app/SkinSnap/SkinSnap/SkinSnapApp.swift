@@ -46,17 +46,17 @@ struct ContentView: View {
                 }
                 .tag(2)
             
-            FitnessView()
-                .tabItem {
-                    Label("Fitness", systemImage: "figure.walk")
-                }
-                .tag(3)
+//            FitnessView()
+//                .tabItem {
+//                    Label("Fitness", systemImage: "figure.walk")
+//                }
+//                .tag(3)
             
             SettingsView()
                 .tabItem {
                     Label("Settings", systemImage: "gear")
                 }
-                .tag(4)
+                .tag(3)
         }
     }
 }
