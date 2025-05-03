@@ -37,7 +37,6 @@ The objective of this project is to deploy an acne lesion detection system on Ap
 ---
 
 ## Repository Structure
-
 ├── quantise_and_compare/
 │   └── quantise_and_compare.ipynb    # Notebook comparing baseline, YOLO, and quantized per-trained ResNet
 ├── prototyping/
@@ -50,7 +49,6 @@ The objective of this project is to deploy an acne lesion detection system on Ap
 ├── scripts/                          # Helper scripts for conversion and deployment
 ├── data/                             # Dataset
 └── README.md                         # ← You are here!
-
 
 ---
 
