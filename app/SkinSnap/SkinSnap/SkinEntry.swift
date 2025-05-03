@@ -216,7 +216,7 @@ extension SkinEntry {
     
     // Helper to access all available regions
     static var allRegionNames: [String] {
-        return ["Forehead", "Cheeks", "Chin", "Nose", "Eyes"]
+        return ["Forehead", "Cheeks", "Chin", "Nose"] //  eyes here
     }
     
     // Get the severity for a specific region

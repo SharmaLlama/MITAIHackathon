@@ -91,9 +91,9 @@ struct HistoryView: View {
                             .foregroundColor(.gray)
                             .padding(.horizontal)
                         
-                        // Severity Chart
-                        HistoryChartSection(title: "Skin Severity Trend") {
-                            HistorySeverityChart(skinEntries: skinEntries)
+                        // Skin Health Chart
+                        HistoryChartSection(title: "Skin Health Trend") {
+                            HistorySkinHealthChart(skinEntries: skinEntries)
                         }
                         
                         // Affected Areas Chart - now a time series
@@ -198,13 +198,13 @@ struct HistoryView: View {
     ) -> [HistoryCorrelationResult] {
         var results: [HistoryCorrelationResult] = []
         
-        // Map of dates to severity scores
+        // Map of dates to skin health scores
         let calendar = Calendar.current
-        var severityByDate: [Date: Double] = [:]
+        var healthByDate: [Date: Double] = [:]
         
         for entry in skinEntries {
             let dayStart = calendar.startOfDay(for: entry.date)
-            severityByDate[dayStart] = entry.severityScore
+            healthByDate[dayStart] = entry.severityScore
         }
         
         // Check for dairy correlation
@@ -214,38 +214,38 @@ struct HistoryView: View {
             description: "Insufficient data"
         )
         
-        var dairyYesSeverities: [Double] = []
-        var dairyNoSeverities: [Double] = []
+        var dairyYesHealth: [Double] = []
+        var dairyNoHealth: [Double] = []
         
         for entry in lifestyleEntries {
             let dayStart = calendar.startOfDay(for: entry.date)
             
-            // Look for severity scores in the next 1-2 days (lag effect)
+            // Look for health scores in the next 1-2 days (lag effect)
             for dayOffset in 1...2 {
                 if let nextDay = calendar.date(byAdding: .day, value: dayOffset, to: dayStart),
-                   let severity = severityByDate[nextDay] {
+                   let health = healthByDate[nextDay] {
                     if entry.dairyConsumed {
-                        dairyYesSeverities.append(severity)
+                        dairyYesHealth.append(health)
                     } else {
-                        dairyNoSeverities.append(severity)
+                        dairyNoHealth.append(health)
                     }
                     break
                 }
             }
         }
         
-        if !dairyYesSeverities.isEmpty && !dairyNoSeverities.isEmpty {
-            let dairyYesAvg = dairyYesSeverities.reduce(0, +) / Double(dairyYesSeverities.count)
-            let dairyNoAvg = dairyNoSeverities.reduce(0, +) / Double(dairyNoSeverities.count)
+        if !dairyYesHealth.isEmpty && !dairyNoHealth.isEmpty {
+            let dairyYesAvg = dairyYesHealth.reduce(0, +) / Double(dairyYesHealth.count)
+            let dairyNoAvg = dairyNoHealth.reduce(0, +) / Double(dairyNoHealth.count)
             
-            let difference = dairyYesAvg - dairyNoAvg
+            let difference = dairyNoAvg - dairyYesAvg // Reversed since higher is better
             let normalized = min(abs(difference) / 25.0, 1.0) // Normalize to 0-1 scale
             
             if difference > 10 {
                 dairyCorrelation = HistoryCorrelationResult(
                     factor: "Dairy Consumption",
                     correlationStrength: normalized,
-                    description: "Skin severity is \(Int(difference)) points higher after consuming dairy"
+                    description: "Skin health is \(Int(difference)) points lower after consuming dairy"
                 )
             } else if difference < -10 {
                 // Unusual - dairy seemed to help
@@ -272,38 +272,38 @@ struct HistoryView: View {
             description: "Insufficient data"
         )
         
-        var lowSleepSeverities: [Double] = []
-        var highSleepSeverities: [Double] = []
+        var lowSleepHealth: [Double] = []
+        var highSleepHealth: [Double] = []
         
         for entry in lifestyleEntries {
             let dayStart = calendar.startOfDay(for: entry.date)
             
-            // Look for severity scores in the next 1-2 days (lag effect)
+            // Look for health scores in the next 1-2 days (lag effect)
             for dayOffset in 1...2 {
                 if let nextDay = calendar.date(byAdding: .day, value: dayOffset, to: dayStart),
-                   let severity = severityByDate[nextDay] {
+                   let health = healthByDate[nextDay] {
                     if entry.sleepHours < 6.0 {
-                        lowSleepSeverities.append(severity)
+                        lowSleepHealth.append(health)
                     } else if entry.sleepHours >= 7.0 {
-                        highSleepSeverities.append(severity)
+                        highSleepHealth.append(health)
                     }
                     break
                 }
             }
         }
         
-        if !lowSleepSeverities.isEmpty && !highSleepSeverities.isEmpty {
-            let lowSleepAvg = lowSleepSeverities.reduce(0, +) / Double(lowSleepSeverities.count)
-            let highSleepAvg = highSleepSeverities.reduce(0, +) / Double(highSleepSeverities.count)
+        if !lowSleepHealth.isEmpty && !highSleepHealth.isEmpty {
+            let lowSleepAvg = lowSleepHealth.reduce(0, +) / Double(lowSleepHealth.count)
+            let highSleepAvg = highSleepHealth.reduce(0, +) / Double(highSleepHealth.count)
             
-            let difference = lowSleepAvg - highSleepAvg
+            let difference = highSleepAvg - lowSleepAvg // Higher sleep is better
             let normalized = min(abs(difference) / 25.0, 1.0) // Normalize to 0-1 scale
             
             if difference > 10 {
                 sleepCorrelation = HistoryCorrelationResult(
                     factor: "Sleep Duration",
                     correlationStrength: normalized,
-                    description: "Skin severity is \(Int(difference)) points higher after insufficient sleep"
+                    description: "Skin health is \(Int(difference)) points lower after insufficient sleep"
                 )
             } else {
                 sleepCorrelation = HistoryCorrelationResult(
@@ -386,8 +386,8 @@ struct HistoryCorrelationSection<Content: View>: View {
     }
 }
 
-// Severity chart implementation - renamed to avoid conflicts
-struct HistorySeverityChart: View {
+// Skin Health chart implementation (renamed from SeverityChart)
+struct HistorySkinHealthChart: View {
     let skinEntries: [SkinEntry]
     
     var body: some View {
@@ -396,15 +396,15 @@ struct HistorySeverityChart: View {
                 ForEach(skinEntries) { entry in
                     LineMark(
                         x: .value("Date", entry.date),
-                        y: .value("Severity", entry.severityScore)
+                        y: .value("Health", entry.severityScore)
                     )
-                    .foregroundStyle(Color.red.gradient)
+                    .foregroundStyle(Color.green.gradient)
                     
                     PointMark(
                         x: .value("Date", entry.date),
-                        y: .value("Severity", entry.severityScore)
+                        y: .value("Health", entry.severityScore)
                     )
-                    .foregroundStyle(Color.red)
+                    .foregroundStyle(Color.green)
                 }
             }
             .chartYScale(domain: 0...100)

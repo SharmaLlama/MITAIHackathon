@@ -11,10 +11,6 @@ struct SkinConditionDetection {
     let confidence: Float
 }
 
-
-
-
-    
 class SkinAnalyser {
     private var acneClassModel: VNCoreMLModel?
     private let processingQueue = DispatchQueue(label: "com.skinsnap.mlprocessing", qos: .userInitiated)
@@ -126,10 +122,19 @@ class SkinAnalyser {
             }
         }
         
-        // Convert severity score from 0-4 scale to 0-100 scale
-        let normalizedSeverityScore = (severityScore / 4.0) * 100.0
+        // Calculate skin health score (inverse of severity, normalized to 0-100)
+        // Combine severity and lesion count with appropriate weights
+        let maxSeverity = 4.0
+        let maxLesions = 65.0
         
-        // Determine condition based on severity
+        // Normalize both metrics to 0-1 scale (1 is healthy)
+        let normalizedSeverity = 1.0 - (severityScore / maxSeverity)
+        let normalizedLesions = 1.0 - (Double(lesionCount) / maxLesions)
+        
+        // Weighted combination (70% severity, 30% lesion count)
+        let skinHealthScore = (normalizedSeverity * 0.7 + normalizedLesions * 0.3) * 100.0
+        
+        // Determine condition based on severity (keep original logic)
         let condition = determineCondition(severityScore: severityScore)
         
         // Create affected areas based on severity
@@ -137,22 +142,21 @@ class SkinAnalyser {
         
         return SkinAnalysisResult(
             date: Date(),
-            severityScore: normalizedSeverityScore,
+            severityScore: skinHealthScore, // Use new skin health score
             condition: condition,
-            confidence: Float(severityScore / 4.0),
+            confidence: Float(normalizedSeverity), // Update confidence calculation
             affectedAreas: affectedAreas,
             lesionCount: lesionCount
         )
     }
        
-        
-        // Resize image to target size (needed for the model's input requirements)
-        private func resizeImage(image: UIImage, targetSize: CGSize) -> UIImage {
-            let renderer = UIGraphicsImageRenderer(size: targetSize)
-            return renderer.image { _ in
-                image.draw(in: CGRect(origin: .zero, size: targetSize))
-            }
+    // Resize image to target size (needed for the model's input requirements)
+    private func resizeImage(image: UIImage, targetSize: CGSize) -> UIImage {
+        let renderer = UIGraphicsImageRenderer(size: targetSize)
+        return renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: targetSize))
         }
+    }
     
     // Map severity score to a condition label
     private func determineCondition(severityScore: Double) -> String {

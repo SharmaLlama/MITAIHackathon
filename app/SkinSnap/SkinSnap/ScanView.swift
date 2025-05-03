@@ -78,7 +78,7 @@ struct ScanView: View {
                                         Text("Severity Score:")
                                         Spacer()
                                         Text("\(Int(historicalEntry.severityScore))/100")
-                                            .foregroundColor(severityColor(score: historicalEntry.severityScore))
+                                            .foregroundColor(healthColor(score: historicalEntry.severityScore))
                                             .fontWeight(.bold)
                                     }
                                     
@@ -293,12 +293,12 @@ struct ScanView: View {
         viewModel.loadHistoricalEntries(modelContext: modelContext)
     }
     
-    private func severityColor(score: Double) -> Color {
+    private func healthColor(score: Double) -> Color {
         switch score {
-        case 0..<25: return .green
-        case 25..<50: return .yellow
-        case 50..<75: return .orange
-        default: return .red
+        case 0..<25: return .red
+        case 25..<50: return .orange
+        case 50..<75: return .yellow
+        default: return .green
         }
     }
 }
@@ -484,9 +484,9 @@ struct DetailedResultView: View {
                 
                 // Analysis Results Card
                 VStack(spacing: 24) {
-                    // Severity Score with circular progress
+                    // Skin Health Score with circular progress
                     VStack(spacing: 8) {
-                        Text("Severity Score")
+                        Text("Skin Health Score")
                             .font(.headline)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         
@@ -498,7 +498,7 @@ struct DetailedResultView: View {
                                 
                                 Circle()
                                     .trim(from: 0, to: CGFloat(analysisResult.severityScore / 100))
-                                    .stroke(severityColor(score: analysisResult.severityScore), style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                                    .stroke(healthColor(score: analysisResult.severityScore), style: StrokeStyle(lineWidth: 10, lineCap: .round))
                                     .frame(width: 100, height: 100)
                                     .rotationEffect(.degrees(-90))
                                 
@@ -512,10 +512,10 @@ struct DetailedResultView: View {
                             }
                             
                             VStack(alignment: .leading, spacing: 5) {
-                                Text(severityLabel(score: analysisResult.severityScore))
+                                Text(healthLabel(score: analysisResult.severityScore))
                                     .font(.title3)
                                     .fontWeight(.semibold)
-                                    .foregroundColor(severityColor(score: analysisResult.severityScore))
+                                    .foregroundColor(healthColor(score: analysisResult.severityScore))
                                 
                                 Text(analysisResult.condition)
                                     .font(.body)
@@ -576,7 +576,7 @@ struct DetailedResultView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                         
                         VStack(alignment: .leading, spacing: 12) {
-                            recommendationRow(icon: "drop.fill", text: generateHydrationRecommendation(severity: analysisResult.severityScore))
+                            recommendationRow(icon: "drop.fill", text: generateHydrationRecommendation(health: analysisResult.severityScore))
                             recommendationRow(icon: "hand.raised.fill", text: "Avoid touching your face to prevent spreading bacteria.")
                             recommendationRow(icon: "bed.double.fill", text: "Ensure you get 7-8 hours of quality sleep.")
                             recommendationRow(icon: "sun.max.fill", text: "Apply SPF 30+ sunscreen daily.")
@@ -657,28 +657,28 @@ struct DetailedResultView: View {
         }
     }
     
-    private func severityColor(score: Double) -> Color {
+    private func healthColor(score: Double) -> Color {
         switch score {
-        case 0..<25: return .green
-        case 25..<50: return .yellow
-        case 50..<75: return .orange
-        default: return .red
+        case 0..<25: return .red
+        case 25..<50: return .orange
+        case 50..<75: return .yellow
+        default: return .green
         }
     }
     
-    private func severityLabel(score: Double) -> String {
+    private func healthLabel(score: Double) -> String {
         switch score {
-        case 0..<25: return "Mild"
-        case 25..<50: return "Moderate"
-        case 50..<75: return "Significant"
-        default: return "Severe"
+        case 0..<25: return "Poor"
+        case 25..<50: return "Fair"
+        case 50..<75: return "Good"
+        default: return "Excellent"
         }
     }
     
-    private func generateHydrationRecommendation(severity: Double) -> String {
-        if severity > 75 {
+    private func generateHydrationRecommendation(health: Double) -> String {
+        if health < 25 {
             return "Increase hydration to 10+ glasses daily to help reduce inflammation."
-        } else if severity > 50 {
+        } else if health < 50 {
             return "Drink 8-10 glasses of water daily to improve skin hydration."
         } else {
             return "Maintain hydration with at least 8 glasses of water daily."
