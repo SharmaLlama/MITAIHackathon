@@ -83,7 +83,7 @@ struct SettingsView: View {
                 }
                 
                 Section(header: Text("About")) {
-                    Text("SkinSnap Pro v1.1")
+                    Text("SnapSkin Pro 1.2")
                     Text("© SharmaLlamaIncorporated")
                 }
             }

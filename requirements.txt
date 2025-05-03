@@ -1,6 +1,11 @@
 # Core ML and deployment libraries
-torch
-torchvision
+hydra-core==1.1.0
+protobuf==3.20.*
+pytorch-lightning==1.5.10
+torch==1.10.1
+torchmetrics==0.7.3
+torchvision==0.11.3
+wandb==0.15.9
 torchaudio
 transformers
 accelerate
@@ -9,22 +14,16 @@ optimum
 datasets
 evaluate
 tensorboard
+ultralytics
+coremltools
 
 # Model optimization libraries
 onnx
 onnxruntime
-sentencepiece
-
-# Deployment and serving libraries
-flask
-fastapi
-uvicorn
-streamlit
-gradio
 huggingface_hub
 
 # Utility libraries
-numpy
+numpy==1.23.1
 pandas
 matplotlib
 scikit-learn
