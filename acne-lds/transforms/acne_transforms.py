@@ -21,7 +21,7 @@ class AcneTransformsTorch:
 
         transforms_list += [
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.45815152, 0.361242, 0.29348266], std=[0.2814769, 0.226306, 0.20132513]),
+            transforms.Normalize(mean=[0.45815152, 0.361242, 0.29348266], std=[0.20132513, 0.20132513, 0.20132513]),
         ]
 
         self.transform = transforms.Compose(transforms_list)
